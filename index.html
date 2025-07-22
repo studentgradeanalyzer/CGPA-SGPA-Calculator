@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CGPA & SGPA Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T8TLRZ45RV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-T8TLRZ45RV');
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #000000, #3b0a85);
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+      animation: fadeInUp 0.5s ease-in-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-row input,
+    .form-row select {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #000;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+
+    .form-actions button {
+      flex: 1;
+      margin: 0 5px;
+      padding: 12px;
+      background-color: #7b2cbf;
+      background-image: linear-gradient(45deg, #5a189a, #9d4edd);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    .form-actions button:hover {
+      background-image: linear-gradient(45deg, #3c096c, #7b2cbf);
+    }
+
+    .output {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        flex-direction: column;
+      }
+      .form-actions {
+        flex-direction: column;
+      }
+      .form-actions button {
+        margin: 5px 0;
+      }
+    }
+
+    .description {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SGPA Calculator</h1>
+    <div class="card">
+      <div id="subjects-container"></div>
+      <div class="form-actions">
+        <button onclick="addSubject()">Add Subject</button>
+        <button onclick="calculateSGPA()">Calculate SGPA</button>
+      </div>
+      <div class="output" id="sgpa-result"></div>
+    </div>
+
+    <h1>CGPA Calculator (Based on Semester SGPAs)</h1>
+    <div class="card">
+      <div id="semester-container"></div>
+      <div class="form-actions">
+        <button onclick="addSemester()">Add Semester</button>
+        <button onclick="calculateCGPA()">Calculate CGPA</button>
+      </div>
+      <div class="output" id="cgpa-result"></div>
+    </div>
+
+    <h1>CGPA/SGPA to Percentage</h1>
+    <div class="card">
+      <select id="university-select">
+        <option value="general">General/CBSE</option>
+        <option value="du">Delhi University</option>
+        <option value="cu">Central Universities</option>
+      </select>
+      <div class="form-row">
+        <input type="text" id="percent-cgpa" placeholder="Enter CGPA/SGPA" />
+      </div>
+      <div class="form-actions">
+        <button onclick="convertToPercent()">Convert to %</button>
+      </div>
+      <div class="output" id="percent-result"></div>
+    </div>
+
+    <div class="description">
+      <h2>What is SGPA?</h2>
+      <p><strong>SGPA</strong> (Semester Grade Point Average) is calculated using grades and credits for subjects in one semester.</p>
+      <p><strong>Formula:</strong> SGPA = Σ (Credit × Grade Point) / Total Credits</p>
+
+      <h2>What is CGPA?</h2>
+      <p><strong>CGPA</strong> (Cumulative Grade Point Average) is the average of all SGPAs across semesters.</p>
+      <p><strong>Formula:</strong> CGPA = Σ (SGPA × Credit) / Σ Credits (if known), otherwise CGPA = Average of SGPAs</p>
+
+      <h2>Conversion to Percentage</h2>
+      <p><strong>General/CBSE:</strong> CGPA × 9.5<br>
+         <strong>Delhi University:</strong> (CGPA - 0.5) × 10<br>
+         <strong>Central Universities:</strong> CGPA × 9.5</p>
+    </div>
+  </div>
+
+  <script>
+    const gradePoints = {
+      'O': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6, 'C': 5, 'P': 4, 'F': 0
+    };
+
+    function addSubject() {
+      const container = document.getElementById('subjects-container');
+      const row = document.createElement('div');
+      row.className = 'form-row';
+
+      const subjectInput = document.createElement('input');
+      subjectInput.placeholder = 'Subject Name';
+
+      const gradeSelect = document.createElement('select');
+      for (let grade in gradePoints) {
+        const option = document.createElement('option');
+        option.value = grade;
+        option.textContent = grade;
+        gradeSelect.appendChild(option);
+      }
+
+      const creditInput = document.createElement('input');
+      creditInput.type = 'number';
+      creditInput.placeholder = 'Credit (optional)';
+
+      row.appendChild(subjectInput);
+      row.appendChild(gradeSelect);
+      row.appendChild(creditInput);
+
+      container.appendChild(row);
+    }
+
+    function calculateSGPA() {
+      const rows = document.querySelectorAll('#subjects-container .form-row');
+      let totalPoints = 0;
+      let totalCredits = 0;
+      let count = 0;
+
+      rows.forEach(row => {
+        const grade = row.children[1].value;
+        const creditVal = row.children[2].value;
+        const credit = parseFloat(creditVal);
+
+        if (grade in gradePoints) {
+          const point = gradePoints[grade];
+          if (!isNaN(credit)) {
+            totalPoints += point * credit;
+            totalCredits += credit;
+          } else {
+            totalPoints += point;
+            count++;
+          }
+        }
+      });
+
+      const sgpa = totalCredits > 0
+        ? (totalPoints / totalCredits).toFixed(2)
+        : count > 0
+        ? (totalPoints / count).toFixed(2)
+        : 'Invalid input';
+
+      document.getElementById('sgpa-result').textContent = `SGPA: ${sgpa}`;
+    }
+
+    function addSemester() {
+      const container = document.getElementById('semester-container');
+      const row = document.createElement('div');
+      row.className = 'form-row';
+
+      const sgpaInput = document.createElement('input');
+      sgpaInput.type = 'number';
+      sgpaInput.placeholder = 'Enter SGPA';
+
+      const creditInput = document.createElement('input');
+      creditInput.type = 'number';
+      creditInput.placeholder = 'Credit (optional)';
+
+      row.appendChild(sgpaInput);
+      row.appendChild(creditInput);
+      container.appendChild(row);
+    }
+
+    function calculateCGPA() {
+      const rows = document.querySelectorAll('#semester-container .form-row');
+      let total = 0;
+      let totalCredits = 0;
+      let count = 0;
+
+      rows.forEach(row => {
+        const sgpa = parseFloat(row.children[0].value);
+        const credit = parseFloat(row.children[1].value);
+
+        if (!isNaN(sgpa)) {
+          if (!isNaN(credit)) {
+            total += sgpa * credit;
+            totalCredits += credit;
+          } else {
+            total += sgpa;
+            count++;
+          }
+        }
+      });
+
+      const cgpa = totalCredits > 0
+        ? (total / totalCredits).toFixed(2)
+        : count > 0
+        ? (total / count).toFixed(2)
+        : 'Invalid input';
+
+      document.getElementById('cgpa-result').textContent = `CGPA: ${cgpa}`;
+    }
+
+    function convertToPercent() {
+      const val = parseFloat(document.getElementById('percent-cgpa').value);
+      const university = document.getElementById('university-select')?.value || 'general';
+      let percent = 0;
+      if (!isNaN(val)) {
+        if (university === 'du') {
+          percent = (val - 0.5) * 10;
+        } else {
+          percent = val * 9.5;
+        }
+        document.getElementById('percent-result').textContent = `Percentage: ${percent.toFixed(2)}%`;
+      } else {
+        document.getElementById('percent-result').textContent = 'Invalid input';
+      }
+    }
+
+    window.onload = () => {
+      addSubject();
+      addSemester();
+    };
+  </script>
+</body>
+</html>
